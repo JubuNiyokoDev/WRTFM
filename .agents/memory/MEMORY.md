@@ -1,0 +1,1 @@
+- [WRTFM platform architecture](wrtfm-platform.md) — full-stack task-verification platform; token auth via setAuthTokenGetter; admin-only review enforcement pattern.
