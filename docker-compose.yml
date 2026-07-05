@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: cae-postgres-prod
+    environment:
+      POSTGRES_USER: cae
+      POSTGRES_PASSWORD: cae_password
+      POSTGRES_DB: cae
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: cae-backend
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - DATABASE_URL=postgresql://cae:cae_password@postgres:5432/cae
+      - NODE_ENV=production
+      # Add other production environment variables here:
+      # - CORS_ORIGIN=http://localhost
+      # - NOWPAYMENTS_API_KEY=your_key
+      # - NOWPAYMENTS_IPN_SECRET=your_secret
+      # - NOWPAYMENTS_IPN_URL=your_ipn_url
+      # - PUBLIC_API_URL=http://localhost:3001
+    depends_on:
+      - postgres
+    restart: always
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: cae-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: always
+
+volumes:
+  postgres_data:

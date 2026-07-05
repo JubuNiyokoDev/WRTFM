@@ -1,0 +1,36 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Worldwide Rapid Task For Money",
+  "version": "0.1.0",
+  "identifier": "com.controlautomation.engine",
+  "build": {
+    "beforeDevCommand": "pnpm dev:web",
+    "beforeBuildCommand": "pnpm build",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist/public"
+  },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [
+      {
+        "title": "Worldwide Rapid Task For Money",
+        "width": 1320,
+        "height": 860,
+        "minWidth": 1080,
+        "minHeight": 720,
+        "resizable": true,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "category": "Business",
+    "shortDescription": "Automated verification engine for task-and-earn platforms",
+    "longDescription": "A professional desktop shell for monitoring campaigns, proofs, automated decisions and manual review workflows."
+  }
+}
