@@ -54,7 +54,7 @@ export default function AdminUsers() {
         <p className="page-subtitle">{t('admin.users.subtitle')}</p>
       </div>
 
-      <div className="flex flex-col gap-3 rounded-[18px] border border-border bg-card p-2 sm:flex-row sm:items-center sm:gap-4">
+      <div className="flex flex-col gap-3 rounded-[18px] border border-border bg-card p-3.5 sm:flex-row sm:items-center sm:gap-4 sm:p-4">
         <div className="relative w-full flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input 

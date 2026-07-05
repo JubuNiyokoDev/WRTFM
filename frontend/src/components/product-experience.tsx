@@ -159,30 +159,30 @@ export function AppBottomNav() {
     ],
   }[role];
 
-  return (
-    <nav
-      className="app-bottom-bar fixed bottom-0 left-0 right-0 z-40 mx-auto grid h-16 max-w-4xl grid-flow-col auto-cols-fr items-center border-t border-border px-2 text-muted-foreground lg:hidden"
-      aria-label="Mobile navigation"
-    >
+   return (
+     <nav
+       className="app-bottom-bar fixed bottom-0 left-0 right-0 z-40 mx-auto grid h-20 max-w-4xl grid-flow-col auto-cols-fr items-center gap-1 border-t border-border px-2 py-2 text-muted-foreground lg:hidden"
+       aria-label="Mobile navigation"
+     >
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = location === item.href || (item.href !== `/${role}` && location.startsWith(`${item.href}/`));
 
         return (
-          <Link
-            key={item.href}
-            href={item.href}
-            aria-current={isActive ? 'page' : undefined}
-            className={cn(
-              'mx-auto flex h-11 min-w-0 max-w-[5.25rem] flex-col items-center justify-center gap-0.5 rounded-md px-1.5 text-[9px] font-semibold transition-all sm:text-[10px]',
-              isActive
-                ? 'bg-primary text-primary-foreground shadow-[0_14px_36px_-24px_hsl(var(--primary))]'
-                : 'hover:bg-card hover:text-foreground'
-            )}
-          >
-            <Icon className="h-4 w-4 flex-none" />
-            <span className="w-full truncate text-center leading-tight">{item.label}</span>
-          </Link>
+           <Link
+             key={item.href}
+             href={item.href}
+             aria-current={isActive ? 'page' : undefined}
+             className={cn(
+               'mx-auto flex h-12 min-w-0 max-w-[6rem] flex-col items-center justify-center gap-1 rounded-md px-2 text-xs font-semibold transition-all sm:text-xs',
+               isActive
+                 ? 'bg-primary text-primary-foreground shadow-[0_14px_36px_-24px_hsl(var(--primary))]'
+                 : 'hover:bg-card hover:text-foreground'
+             )}
+           >
+             <Icon className="h-5 w-5 flex-none sm:h-5 sm:w-5" />
+             <span className="w-full truncate text-center text-xs leading-tight">{item.label}</span>
+           </Link>
         );
       })}
     </nav>
