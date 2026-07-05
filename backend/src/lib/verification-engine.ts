@@ -113,7 +113,8 @@ export function runVerificationEngine(
   }
 
   // Calculate confidence score (weighted average)
-  const weights: Record<string, number> = {
+  // Normalize weights so they sum to 1.0 dynamically based on active checks
+  const baseWeights: Record<string, number> = {
     "Duplicate Detection": 0.15,
     "Proof Completeness": 0.25,
     "Proof Type Match": 0.2,
@@ -125,10 +126,22 @@ export function runVerificationEngine(
     "Client History": 0.06,
   };
 
+  // Calculate sum of weights for checks that will run
+  let activeWeightSum = 0;
+  for (const check of checks) {
+    activeWeightSum += baseWeights[check.name] ?? 0.1;
+  }
+
+  // Normalize weights so active checks sum to 1.0
+  const weights: Record<string, number> = {};
+  for (const [name, weight] of Object.entries(baseWeights)) {
+    weights[name] = weight / activeWeightSum;
+  }
+
   let weightedSum = 0;
   let totalWeight = 0;
   for (const check of checks) {
-    const w = weights[check.name] ?? 0.1;
+    const w = weights[check.name] ?? 0.1 / activeWeightSum;
     weightedSum += check.score * w;
     totalWeight += w;
   }

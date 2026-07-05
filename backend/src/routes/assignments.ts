@@ -516,18 +516,6 @@ router.post(
     }
 
     const proofAdditionalData = parseAdditionalData(parsed.data.additionalData);
-    const fileHash =
-      typeof proofAdditionalData.sha256 === "string"
-        ? proofAdditionalData.sha256
-        : null;
-    const duplicateProofs = fileHash
-      ? await db
-          .select({ id: proofsTable.id })
-          .from(proofsTable)
-          .where(sql`${proofsTable.additionalData}->>'sha256' = ${fileHash}`)
-          .limit(1)
-      : [];
-    const duplicateDetected = duplicateProofs.length > 0;
 
     // Generate content hash for duplicate detection
     const { generateProofHash } = await import("../lib/proof-hash.js");
@@ -538,6 +526,15 @@ router.post(
       code: parsed.data.code ?? null,
       description: parsed.data.description ?? null,
     });
+
+    // Check for duplicate proofs using contentHash
+    const { checkForDuplicateProof } =
+      await import("../lib/duplicate-checker.js");
+    const duplicateCheckResult = await checkForDuplicateProof(
+      contentHash,
+      assignment.workerId,
+      assignmentId,
+    );
 
     // Save proof
     await db.insert(proofsTable).values({
@@ -551,7 +548,7 @@ router.post(
       contentHash,
       additionalData: {
         ...proofAdditionalData,
-        duplicateDetected,
+        duplicateDetected: duplicateCheckResult.hasDuplicate,
       },
     });
 
@@ -654,14 +651,7 @@ router.post(
       },
       workerInfoObj,
       clientInfo,
-      duplicateDetected
-        ? {
-            hasDuplicate: true,
-            duplicateCount: duplicateProofs.length,
-            byWorker: 0,
-            global: duplicateProofs.length,
-          }
-        : undefined,
+      duplicateCheckResult.hasDuplicate ? duplicateCheckResult : undefined,
     );
 
     // Save verification result
