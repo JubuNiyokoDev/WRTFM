@@ -78,25 +78,34 @@ jobs:
         run: |
           set -euo pipefail
           test -n "$STAGING_USER"
-          ssh -i ~/.ssh/wrtfm_staging_key -p "$STAGING_PORT" "$STAGING_USER@$STAGING_HOST" \
+          ssh -i ~/.ssh/wrtfm_staging_key \
+            -o ServerAliveInterval=30 \
+            -o ServerAliveCountMax=6 \
+            -p "$STAGING_PORT" "$STAGING_USER@$STAGING_HOST" \
             "set -euo pipefail
              cd '$STAGING_APP_DIR'
              set -a
              . ./.env
              set +a
-             apt-get update -y
-             DEBIAN_FRONTEND=noninteractive apt-get install -y nginx certbot python3-certbot-nginx
+             if ! command -v nginx >/dev/null 2>&1 || ! command -v certbot >/dev/null 2>&1; then
+               apt-get update -y
+               DEBIAN_FRONTEND=noninteractive apt-get install -y nginx certbot python3-certbot-nginx
+             fi
+             mkdir -p /var/www/html
+             systemctl enable --now nginx >/dev/null 2>&1 || true
+             if [ ! -f /etc/letsencrypt/live/wrtfm.work.gd/fullchain.pem ]; then
+               cp deploy/nginx/wrtfm.work.gd.conf /tmp/wrtfm.nginx.next
+               sed -i '/listen 443 ssl/,/^}/d' /tmp/wrtfm.nginx.next
+               cp /tmp/wrtfm.nginx.next /etc/nginx/sites-available/wrtfm
+               ln -sfn /etc/nginx/sites-available/wrtfm /etc/nginx/sites-enabled/wrtfm
+               nginx -t
+               systemctl reload nginx
+               certbot certonly --webroot --non-interactive --agree-tos --email \"\$ADMIN_EMAIL\" \
+                 -w /var/www/html -d wrtfm.work.gd -d www.wrtfm.work.gd
+             fi
              cp deploy/nginx/wrtfm.work.gd.conf /etc/nginx/sites-available/wrtfm
              ln -sfn /etc/nginx/sites-available/wrtfm /etc/nginx/sites-enabled/wrtfm
              rm -f /etc/nginx/sites-enabled/default
-             nginx -t
-             systemctl enable --now nginx
-             systemctl reload nginx
-             if certbot certificates -d wrtfm.work.gd 2>/dev/null | grep -q 'Certificate Name: wrtfm.work.gd'; then
-               certbot renew --quiet
-             else
-               certbot --nginx --non-interactive --agree-tos --email \"\$ADMIN_EMAIL\" -d wrtfm.work.gd -d www.wrtfm.work.gd
-             fi
              nginx -t
              systemctl reload nginx
              curl -fsS https://wrtfm.work.gd/api/healthz"
