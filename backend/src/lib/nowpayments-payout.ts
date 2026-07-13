@@ -16,7 +16,7 @@ export type NowPaymentsPayoutResult = {
   raw: Record<string, unknown>;
   verification?: {
     attempted: boolean;
-    status: number;
+    status: number | "skipped_invalid_secret";
     raw: Record<string, unknown> | string | null;
   };
 };
@@ -162,6 +162,14 @@ function pickProviderStatus(payload: Record<string, unknown>): string {
 async function verifyPayoutIfConfigured(token: string, batchWithdrawalId: string) {
   const secret = process.env.NOWPAYMENTS_PAYOUT_TOTP_SECRET;
   if (!secret) return undefined;
+  const normalizedSecret = secret.replace(/=+$/g, "").replace(/\s+/g, "").toUpperCase();
+  if (!/^[A-Z2-7]{16,}$/.test(normalizedSecret)) {
+    return {
+      attempted: false,
+      status: "skipped_invalid_secret" as const,
+      raw: "NOWPAYMENTS_PAYOUT_TOTP_SECRET is not a Base32 setup key; payout verify step skipped.",
+    };
+  }
 
   const response = await fetch(`${baseUrl()}/payout/${batchWithdrawalId}/verify`, {
     method: "POST",
@@ -169,7 +177,7 @@ async function verifyPayoutIfConfigured(token: string, batchWithdrawalId: string
       authorization: `Bearer ${token}`,
       "content-type": "application/json",
     },
-    body: JSON.stringify({ verification_code: generateTotp(secret) }),
+    body: JSON.stringify({ verification_code: generateTotp(normalizedSecret) }),
     signal: AbortSignal.timeout(30_000),
   });
   const body = await readProviderBody(response);
