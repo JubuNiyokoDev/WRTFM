@@ -66,7 +66,7 @@ jobs:
              docker compose build
              docker compose up -d
              docker compose --profile tools run --rm db-migrator
-             curl -fsS http://127.0.0.1:3001/api/healthz"
+             curl -fsS http://127.0.0.1:\${BACKEND_HOST_PORT:-3011}/api/healthz"
 
       - name: Configure Nginx and HTTPS
         env:

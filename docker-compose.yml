@@ -21,7 +21,7 @@ services:
       dockerfile: backend/Dockerfile
     container_name: cae-backend
     ports:
-      - "127.0.0.1:3001:3001"
+      - "127.0.0.1:${BACKEND_HOST_PORT:-3011}:3001"
     environment:
       - PORT=3001
       - DATABASE_URL=postgresql://${POSTGRES_USER:-cae}:${POSTGRES_PASSWORD:-change_this_postgres_password}@postgres:5432/${POSTGRES_DB:-cae}
@@ -102,7 +102,7 @@ services:
       dockerfile: frontend/Dockerfile
     container_name: cae-frontend
     ports:
-      - "127.0.0.1:8080:80"
+      - "127.0.0.1:${FRONTEND_HOST_PORT:-18100}:80"
     depends_on:
       backend:
         condition: service_healthy

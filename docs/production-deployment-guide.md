@@ -13,8 +13,8 @@ les payouts NOWPayments n'ont pas été validés avec un petit retrait réel.
 Architecture retenue :
 
 - `wrtfm.work.gd` pointe vers le serveur/VPS WRTFM, pas vers Appwrite Sites.
-- Nginx sur le VPS sert le frontend Docker sur `127.0.0.1:8080`.
-- Nginx envoie `/api/*` vers le backend Docker sur `127.0.0.1:3001`.
+- Nginx sur le VPS sert le frontend Docker sur `127.0.0.1:18100`.
+- Nginx envoie `/api/*` vers le backend Docker sur `127.0.0.1:3011`.
 - Le backend appelle PostgreSQL et le microservice KYC Python dans le réseau Docker privé.
 - Appwrite self-hosted reste le service de stockage privé des preuves KYC et proofs, via
   `APPWRITE_ENDPOINT=https://appwrite.run.place/`.
@@ -49,6 +49,8 @@ NOWPAYMENTS_IPN_URL=https://wrtfm.work.gd/api/payments/nowpayments/ipn
 NOWPAYMENTS_PAYOUT_IPN_URL=https://wrtfm.work.gd/api/payments/nowpayments/payout-ipn
 APPWRITE_ENDPOINT=https://appwrite.run.place/
 KYC_VISION_SERVICE_URL=http://kyc-vision-service:5010
+BACKEND_HOST_PORT=3011
+FRONTEND_HOST_PORT=18100
 ```
 
 Si `NOWPAYMENTS_PAYOUT_IPN_URL` reste vide, le backend construit automatiquement :
