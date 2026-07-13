@@ -212,10 +212,14 @@ function Router() {
 }
 
 function App() {
+  const routerBase = import.meta.env.BASE_URL.startsWith("/")
+    ? import.meta.env.BASE_URL.replace(/\/$/, "")
+    : "";
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+        <WouterRouter base={routerBase}>
           <ErrorBoundary>
             <Router />
           </ErrorBoundary>
