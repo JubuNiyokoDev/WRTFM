@@ -64,8 +64,9 @@ jobs:
              chmod +x scripts/production-preflight.sh
              ./scripts/production-preflight.sh .env
              docker compose build
-             docker compose up -d
+             docker compose up -d postgres kyc-vision-service
              docker compose --profile tools run --rm db-migrator
+             docker compose up -d backend frontend
              curl -fsS http://127.0.0.1:\${BACKEND_HOST_PORT:-3011}/api/healthz"
 
       - name: Configure Nginx and HTTPS
