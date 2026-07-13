@@ -9,6 +9,10 @@ RUN pnpm install --frozen-lockfile
 COPY backend ./backend
 RUN pnpm --dir backend build
 
+FROM builder AS migrator
+WORKDIR /app
+CMD ["pnpm", "--dir", "backend", "db:push"]
+
 # Production stage
 FROM node:20-alpine
 RUN npm install -g pnpm

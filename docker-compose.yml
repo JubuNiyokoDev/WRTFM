@@ -60,6 +60,20 @@ services:
       retries: 5
     restart: always
 
+  db-migrator:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: migrator
+    container_name: cae-db-migrator
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-cae}:${POSTGRES_PASSWORD:-change_this_postgres_password}@postgres:5432/${POSTGRES_DB:-cae}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - tools
+
   kyc-vision-service:
     build:
       context: ./backend/kyc-vision-service

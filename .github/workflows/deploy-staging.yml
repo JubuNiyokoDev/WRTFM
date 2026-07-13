@@ -1,0 +1,101 @@
+name: Deploy staging
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: staging
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare SSH key
+        env:
+          STAGING_SSH_KEY: ${{ secrets.STAGING_SSH_KEY }}
+          STAGING_HOST: ${{ secrets.STAGING_HOST }}
+        run: |
+          set -euo pipefail
+          test -n "$STAGING_SSH_KEY"
+          test -n "$STAGING_HOST"
+          mkdir -p ~/.ssh
+          printf '%s\n' "$STAGING_SSH_KEY" > ~/.ssh/wrtfm_staging_key
+          chmod 600 ~/.ssh/wrtfm_staging_key
+          ssh-keyscan -H "$STAGING_HOST" >> ~/.ssh/known_hosts
+
+      - name: Upload source to VPS
+        env:
+          STAGING_HOST: ${{ secrets.STAGING_HOST }}
+          STAGING_USER: ${{ secrets.STAGING_USER }}
+          STAGING_PORT: ${{ secrets.STAGING_PORT || '22' }}
+          STAGING_APP_DIR: ${{ secrets.STAGING_APP_DIR || '/opt/wrtfm' }}
+        run: |
+          set -euo pipefail
+          test -n "$STAGING_USER"
+          ssh -i ~/.ssh/wrtfm_staging_key -p "$STAGING_PORT" "$STAGING_USER@$STAGING_HOST" \
+            "mkdir -p '$STAGING_APP_DIR'"
+          rsync -az --delete \
+            --exclude '.git/' \
+            --exclude '.env' \
+            --exclude 'node_modules/' \
+            --exclude 'backend/node_modules/' \
+            --exclude 'frontend/node_modules/' \
+            --exclude 'backend/dist/' \
+            --exclude 'frontend/dist/' \
+            --exclude '.certs/' \
+            -e "ssh -i ~/.ssh/wrtfm_staging_key -p $STAGING_PORT" \
+            ./ "$STAGING_USER@$STAGING_HOST:$STAGING_APP_DIR/"
+
+      - name: Deploy application
+        env:
+          STAGING_HOST: ${{ secrets.STAGING_HOST }}
+          STAGING_USER: ${{ secrets.STAGING_USER }}
+          STAGING_PORT: ${{ secrets.STAGING_PORT || '22' }}
+          STAGING_APP_DIR: ${{ secrets.STAGING_APP_DIR || '/opt/wrtfm' }}
+        run: |
+          set -euo pipefail
+          test -n "$STAGING_USER"
+          ssh -i ~/.ssh/wrtfm_staging_key -p "$STAGING_PORT" "$STAGING_USER@$STAGING_HOST" \
+            "set -euo pipefail
+             cd '$STAGING_APP_DIR'
+             chmod +x scripts/production-preflight.sh
+             ./scripts/production-preflight.sh .env
+             docker compose build
+             docker compose up -d
+             docker compose --profile tools run --rm db-migrator
+             curl -fsS http://127.0.0.1:3001/api/healthz"
+
+      - name: Configure Nginx and HTTPS
+        env:
+          STAGING_HOST: ${{ secrets.STAGING_HOST }}
+          STAGING_USER: ${{ secrets.STAGING_USER }}
+          STAGING_PORT: ${{ secrets.STAGING_PORT || '22' }}
+          STAGING_APP_DIR: ${{ secrets.STAGING_APP_DIR || '/opt/wrtfm' }}
+        run: |
+          set -euo pipefail
+          test -n "$STAGING_USER"
+          ssh -i ~/.ssh/wrtfm_staging_key -p "$STAGING_PORT" "$STAGING_USER@$STAGING_HOST" \
+            "set -euo pipefail
+             cd '$STAGING_APP_DIR'
+             set -a
+             . ./.env
+             set +a
+             apt-get update -y
+             DEBIAN_FRONTEND=noninteractive apt-get install -y nginx certbot python3-certbot-nginx
+             cp deploy/nginx/wrtfm.work.gd.conf /etc/nginx/sites-available/wrtfm
+             ln -sfn /etc/nginx/sites-available/wrtfm /etc/nginx/sites-enabled/wrtfm
+             rm -f /etc/nginx/sites-enabled/default
+             nginx -t
+             systemctl enable --now nginx
+             systemctl reload nginx
+             if certbot certificates -d wrtfm.work.gd 2>/dev/null | grep -q 'Certificate Name: wrtfm.work.gd'; then
+               certbot renew --quiet
+             else
+               certbot --nginx --non-interactive --agree-tos --email \"\$ADMIN_EMAIL\" -d wrtfm.work.gd -d www.wrtfm.work.gd
+             fi
+             nginx -t
+             systemctl reload nginx
+             curl -fsS https://wrtfm.work.gd/api/healthz"
