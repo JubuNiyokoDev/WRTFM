@@ -1,5 +1,5 @@
 # Build stage
-FROM node:20-alpine AS builder
+FROM node:20-bookworm-slim AS builder
 RUN npm install -g pnpm
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json tsconfig.json ./
@@ -14,7 +14,7 @@ WORKDIR /app
 CMD ["pnpm", "--dir", "backend", "db:push"]
 
 # Production stage
-FROM node:20-alpine
+FROM node:20-bookworm-slim
 RUN npm install -g pnpm
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json tsconfig.json ./
