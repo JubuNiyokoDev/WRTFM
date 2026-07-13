@@ -71,7 +71,7 @@ export default function ClientDashboard() {
   })) || [];
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="space-y-4 sm:space-y-6 lg:space-y-8">
       <div>
         <h1 className="page-title">{t('client.overview.title')}</h1>
         <p className="page-subtitle">{t('client.overview.subtitle')}</p>
@@ -81,47 +81,47 @@ export default function ClientDashboard() {
       <div className="metric-grid">
         <Card>
           <CardContent className="p-3.5 sm:p-4">
-            <div className="flex justify-between items-start">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{t('client.dash.active_campaigns')}</p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 space-y-2">
+                <p className="truncate text-[11px] font-semibold uppercase text-muted-foreground sm:text-xs">{t('client.dash.active_campaigns')}</p>
                 <p className="metric-value">{summary?.activeCampaigns || 0}</p>
               </div>
               <div className="flex h-9 w-9 items-center justify-center rounded bg-primary/10 text-primary sm:h-10 sm:w-10">
                 <Megaphone className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
             </div>
-            <div className="mt-4 text-sm text-muted-foreground">{t('client.overview.out_of').replace('{total}', String(summary?.totalCampaigns || 0))}</div>
+            <div className="mt-3 text-xs text-muted-foreground sm:mt-4 sm:text-sm">{t('client.overview.out_of').replace('{total}', String(summary?.totalCampaigns || 0))}</div>
           </CardContent>
         </Card>
         
         <Card>
           <CardContent className="p-3.5 sm:p-4">
-            <div className="flex justify-between items-start">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{t('client.overview.tasks_completed')}</p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 space-y-2">
+                <p className="truncate text-[11px] font-semibold uppercase text-muted-foreground sm:text-xs">{t('client.overview.tasks_completed')}</p>
                 <p className="metric-value">{summary?.totalTasksCompleted?.toLocaleString() || 0}</p>
               </div>
               <div className="flex h-9 w-9 items-center justify-center rounded bg-chart-2/10 text-chart-2 sm:h-10 sm:w-10">
                 <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
             </div>
-            <div className="mt-4 text-sm text-muted-foreground">{t('client.overview.published')}: {summary?.totalTasksPublished?.toLocaleString() || 0}</div>
+            <div className="mt-3 text-xs text-muted-foreground sm:mt-4 sm:text-sm">{t('client.overview.published')}: <span className="whitespace-nowrap">{summary?.totalTasksPublished?.toLocaleString() || 0}</span></div>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-3.5 sm:p-4">
-            <div className="flex justify-between items-start">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{t('client.dash.total_spent')}</p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 space-y-2">
+                <p className="truncate text-[11px] font-semibold uppercase text-muted-foreground sm:text-xs">{t('client.dash.total_spent')}</p>
                 <p className="metric-value">${summary?.totalSpent?.toLocaleString() || 0}</p>
               </div>
               <div className="flex h-9 w-9 items-center justify-center rounded bg-chart-4/10 text-chart-4 sm:h-10 sm:w-10">
                 <DollarSign className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
             </div>
-            <div className="mt-4 flex items-center justify-between gap-3">
-              <div className="text-sm text-muted-foreground">{t('client.overview.wallet')}: ${summary?.walletBalance?.toLocaleString() || 0}</div>
+            <div className="mt-3 flex items-center justify-between gap-3 sm:mt-4">
+              <div className="truncate text-xs text-muted-foreground sm:text-sm">{t('client.overview.wallet')}: <span className="whitespace-nowrap">${summary?.walletBalance?.toLocaleString() || 0}</span></div>
               <Dialog onOpenChange={(open) => !open && setDeposit(null)}>
                 <DialogTrigger asChild>
                   <Button size="sm" variant="outline">{t('client.overview.deposit')}</Button>

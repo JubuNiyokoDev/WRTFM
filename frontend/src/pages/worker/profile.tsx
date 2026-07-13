@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useGetMe, useUpdateUser, getGetMeQueryKey, useGetWallet, useListTransactions } from '@/api-client';
+import { useGetMe, useUpdateUser, getGetMeQueryKey, useGetWallet } from '@/api-client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,8 +37,6 @@ export default function WorkerProfile() {
   if (me?.country) profileProgress += 20;
   if (me?.kycStatus === 'verified') profileProgress += 40;
   else if (me?.kycStatus === 'pending') profileProgress += 20;
-
-  console.log("WorkerProfile me data:", me, "isLoading:", isLoading);
 
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
@@ -96,7 +94,7 @@ export default function WorkerProfile() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-5">
       <div>
         <h1 className="page-title">{t('profile.title')}</h1>
         <p className="page-subtitle">{t('profile.subtitle')}</p>
@@ -105,41 +103,41 @@ export default function WorkerProfile() {
       {/* User Info Card */}
       <Card className="relative overflow-hidden">
         <div className="absolute right-0 top-0 w-40 h-40 bg-primary/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
-        <CardContent className="relative z-10 p-5 sm:p-6">
-          <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary text-xl font-bold sm:h-20 sm:w-20 sm:text-2xl">
-              {me?.name ? me.name.slice(0, 2).toUpperCase() : ''}
+        <CardContent className="relative z-10 p-4 sm:p-5">
+          <div className="flex flex-col items-center gap-3 sm:flex-row sm:items-start sm:gap-5">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-lg font-bold text-primary sm:h-16 sm:w-16 sm:text-xl">
+              {me?.name ? me.name.slice(0, 2).toUpperCase() : '??'}
             </div>
-            <div className="flex-1 text-center sm:text-left space-y-3">
-              <div>
-                <h2 className="text-lg font-display font-bold sm:text-xl">{me?.name}</h2>
-                <p className="text-sm text-muted-foreground">{me?.email}</p>
+            <div className="min-w-0 flex-1 space-y-3 text-center sm:text-left">
+              <div className="min-w-0">
+                <h2 className="truncate text-base font-display font-bold sm:text-lg">{me?.name || "New User"}</h2>
+                <p className="truncate text-xs text-muted-foreground sm:text-sm">{me?.email}</p>
               </div>
-              <div className="flex flex-wrap justify-center gap-3 sm:justify-start">
-                <span className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary capitalize">
-                  <Shield className="h-3 w-3" /> {t(`role.${me?.role}`)}
+              <div className="flex flex-wrap justify-center gap-2 sm:justify-start">
+                <span className="inline-flex min-w-0 items-center gap-1.5 rounded-md bg-primary/10 px-2 py-1 text-[11px] font-semibold text-primary capitalize sm:text-xs">
+                  <Shield className="h-3 w-3 shrink-0" /> <span className="truncate">{t(`role.${me?.role}`)}</span>
                 </span>
                 {me?.reputationScore !== undefined && (
-                  <span className="inline-flex items-center gap-1.5 rounded-md bg-chart-4/10 px-2.5 py-1 text-xs font-semibold text-chart-4">
-                    <Award className="h-3 w-3" /> {t('profile.reputation')}: {me.reputationScore}
+                  <span className="inline-flex min-w-0 items-center gap-1.5 rounded-md bg-chart-4/10 px-2 py-1 text-[11px] font-semibold text-chart-4 sm:text-xs">
+                    <Award className="h-3 w-3 shrink-0" /> <span className="truncate">{t('profile.reputation')}: {me.reputationScore}</span>
                   </span>
                 )}
                 {me?.country && (
-                  <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                    <Globe className="h-3 w-3" /> {me.country}
+                  <span className="inline-flex min-w-0 items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-[11px] font-medium text-muted-foreground sm:text-xs">
+                    <Globe className="h-3 w-3 shrink-0" /> <span className="truncate">{me.country}</span>
                   </span>
                 )}
-                <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
-                  <Calendar className="h-3 w-3" /> {formatDate(me?.createdAt)}
+                <span className="inline-flex min-w-0 items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-[11px] font-medium text-muted-foreground sm:text-xs">
+                  <Calendar className="h-3 w-3 shrink-0" /> <span className="truncate">{formatDate(me?.createdAt)}</span>
                 </span>
               </div>
 
               {/* Quick wallet balance */}
               {wallet && (
-                <div className="flex items-center gap-2 mt-2 rounded-md bg-muted/50 p-2.5 text-sm">
-                  <Wallet className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">{t('wallet.available_balance')}:</span>
-                  <span className="font-mono font-bold">${wallet.balance?.toFixed(2) || '0.00'}</span>
+                <div className="mt-2 flex min-w-0 items-center gap-2 rounded-md bg-muted/50 p-2 text-xs sm:text-sm">
+                  <Wallet className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="truncate text-muted-foreground">{t('wallet.available_balance')}:</span>
+                  <span className="whitespace-nowrap font-mono font-bold">${wallet.balance?.toFixed(2) || '0.00'}</span>
                 </div>
               )}
             </div>
@@ -149,51 +147,51 @@ export default function WorkerProfile() {
 
       {/* KYC Progress Card */}
       <Card className="border-border overflow-hidden">
-        <CardContent className="p-5 sm:p-6">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex-1 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-lg flex items-center gap-2">
-                    <ShieldCheck className={`h-5 w-5 ${me?.kycStatus === 'verified' ? 'text-green-500' : 'text-primary'}`} />
+        <CardContent className="p-4 sm:p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0 flex-1 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="flex items-center gap-2 text-base font-semibold sm:text-lg">
+                    <ShieldCheck className={`h-4 w-4 shrink-0 sm:h-5 sm:w-5 ${me?.kycStatus === 'verified' ? 'text-green-500' : 'text-primary'}`} />
                     Complétion du Profil
                   </h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {me?.kycStatus === 'verified' 
-                      ? 'Votre identité est vérifiée. Vous avez accès à toutes les fonctionnalités.' 
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground sm:text-sm">
+                    {me?.kycStatus === 'verified'
+                      ? 'Votre identité est vérifiée. Vous avez accès à toutes les fonctionnalités.'
                       : 'Complétez votre profil et vérifiez votre identité pour débloquer les retraits.'}
                   </p>
                 </div>
-                <span className="text-2xl font-bold font-mono">{profileProgress}%</span>
+                <span className="shrink-0 whitespace-nowrap rounded-md bg-muted px-2 py-1 font-mono text-sm font-bold tabular-nums sm:text-xl">{profileProgress}%</span>
               </div>
-              
-              <div className="h-3 w-full bg-muted rounded-full overflow-hidden">
-                <div 
+
+              <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
+                <div
                   className={`h-full transition-all duration-1000 ease-out rounded-full ${me?.kycStatus === 'verified' ? 'bg-green-500' : 'bg-primary'}`}
                   style={{ width: `${profileProgress}%` }}
                 />
               </div>
-              
-              <div className="flex gap-4 text-xs font-medium">
-                <span className="flex items-center gap-1.5 text-green-500">
-                  <CheckCircle2 className="h-3.5 w-3.5" /> Compte créé
+
+              <div className="grid grid-cols-3 gap-2 text-[11px] font-medium sm:flex sm:gap-4 sm:text-xs">
+                <span className="flex min-w-0 items-center gap-1.5 text-green-500">
+                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0" /> <span className="truncate">Compte créé</span>
                 </span>
-                <span className={`flex items-center gap-1.5 ${me?.name && me.country ? 'text-green-500' : 'text-muted-foreground'}`}>
+                <span className={`flex min-w-0 items-center gap-1.5 ${me?.name && me.country ? 'text-green-500' : 'text-muted-foreground'}`}>
                   {me?.name && me.country ? <CheckCircle2 className="h-3.5 w-3.5" /> : <div className="h-3.5 w-3.5 rounded-full border border-current opacity-50" />}
-                  Infos complétées
+                  <span className="truncate">Infos complétées</span>
                 </span>
-                <span className={`flex items-center gap-1.5 ${me?.kycStatus === 'verified' ? 'text-green-500' : 'text-muted-foreground'}`}>
+                <span className={`flex min-w-0 items-center gap-1.5 ${me?.kycStatus === 'verified' ? 'text-green-500' : 'text-muted-foreground'}`}>
                   {me?.kycStatus === 'verified' ? <CheckCircle2 className="h-3.5 w-3.5" /> : <div className="h-3.5 w-3.5 rounded-full border border-current opacity-50" />}
-                  KYC Vérifié
+                  <span className="truncate">KYC Vérifié</span>
                 </span>
               </div>
             </div>
-            
-            <div className="sm:pl-6 sm:border-l border-border flex flex-col items-center justify-center min-w-[200px]">
+
+            <div className="flex flex-col items-center justify-center border-border sm:min-w-[160px] sm:border-l sm:pl-5">
               {me?.kycStatus === 'verified' ? (
                 <div className="flex flex-col items-center text-green-500">
-                  <CheckCircle2 className="h-10 w-10 mb-2" />
-                  <span className="font-semibold text-sm uppercase tracking-wider">Vérifié</span>
+                  <CheckCircle2 className="mb-1 h-8 w-8 sm:h-10 sm:w-10" />
+                  <span className="text-xs font-semibold uppercase tracking-normal sm:text-sm">Vérifié</span>
                 </div>
               ) : (
                 <Button className="w-full gap-2 group" onClick={() => setKycOpen(true)}>
@@ -204,11 +202,11 @@ export default function WorkerProfile() {
           </div>
         </CardContent>
       </Card>
-      
-      <KycModal 
-        open={kycOpen} 
-        onOpenChange={setKycOpen} 
-        userName={me?.name || 'Utilisateur'} 
+
+      <KycModal
+        open={kycOpen}
+        onOpenChange={setKycOpen}
+        userName={me?.name || 'Utilisateur'}
       />
 
       {/* Edit Profile Form */}
@@ -229,7 +227,7 @@ export default function WorkerProfile() {
               )} />
 
               <div className="space-y-2">
-                <FormLabel>{t('profile.email')}</FormLabel>
+                <Label>{t('profile.email')}</Label>
                 <div className="flex items-center gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
                   <Mail className="h-4 w-4" />
                   {me?.email}

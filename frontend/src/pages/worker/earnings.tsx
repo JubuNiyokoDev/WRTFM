@@ -45,7 +45,7 @@ export default function WorkerEarnings() {
     resolver: zodResolver(withdrawSchema),
     defaultValues: {
       amount: 10,
-      method: 'paypal',
+      method: 'trx',
       accountDetails: '',
     },
   });
@@ -70,7 +70,7 @@ export default function WorkerEarnings() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
         <h1 className="page-title">{t('worker.earnings.title')}</h1>
         <p className="page-subtitle">{t('worker.earnings.subtitle')}</p>
@@ -80,9 +80,9 @@ export default function WorkerEarnings() {
         <Card className="bg-primary/5 border-primary/20 relative overflow-hidden">
           <div className="absolute right-0 top-0 w-48 h-48 bg-primary/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
           <CardContent className="relative z-10 p-3.5 sm:p-4">
-            <div className="mb-4 flex items-start justify-between sm:mb-6">
-              <div>
-                <p className="text-sm font-medium text-primary uppercase tracking-wider mb-1">{t('worker.balance')}</p>
+            <div className="mb-4 flex items-start justify-between gap-3 sm:mb-6">
+              <div className="min-w-0">
+                <p className="mb-1 truncate text-[11px] font-semibold uppercase text-primary sm:text-xs">{t('worker.balance')}</p>
                 {isWalletLoading ? <Skeleton className="h-7 w-32 rounded-md" /> : (
                   <p className="metric-value text-foreground">${wallet?.balance?.toFixed(2) || '0.00'}</p>
                 )}
@@ -92,13 +92,13 @@ export default function WorkerEarnings() {
               </div>
             </div>
 
-            <div className="mb-5 flex flex-col gap-2 text-sm sm:mb-7 sm:flex-row sm:items-center sm:gap-4">
-              <div className="text-muted-foreground">
-                {t('worker.pending')}: <span className="font-mono text-foreground font-medium">${wallet?.pendingBalance?.toFixed(2) || '0.00'}</span>
+            <div className="mb-5 flex flex-col gap-2 text-xs sm:mb-7 sm:flex-row sm:items-center sm:gap-4 sm:text-sm">
+              <div className="min-w-0 text-muted-foreground">
+                <span className="truncate">{t('worker.pending')}:</span> <span className="whitespace-nowrap font-mono font-medium text-foreground">${wallet?.pendingBalance?.toFixed(2) || '0.00'}</span>
               </div>
-              <div className="w-px h-4 bg-border" />
-              <div className="text-muted-foreground">
-                {t('general.lifetime')}: <span className="font-mono text-foreground font-medium">${wallet?.totalEarned?.toFixed(2) || '0.00'}</span>
+              <div className="hidden h-4 w-px bg-border sm:block" />
+              <div className="min-w-0 text-muted-foreground">
+                <span className="truncate">{t('general.lifetime')}:</span> <span className="whitespace-nowrap font-mono font-medium text-foreground">${wallet?.totalEarned?.toFixed(2) || '0.00'}</span>
               </div>
             </div>
 
@@ -141,15 +141,15 @@ export default function WorkerEarnings() {
                     )} />
                     <FormField control={form.control} name="method" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('worker.method')}</FormLabel>
-                        <FormControl><Input placeholder={t('worker.method_placeholder')} {...field} /></FormControl>
+                        <FormLabel>Devise payout NOWPayments</FormLabel>
+                        <FormControl><Input placeholder="trx, usdttrc20, btc..." {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
                     <FormField control={form.control} name="accountDetails" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t('worker.account_details')}</FormLabel>
-                        <FormControl><Input placeholder="email@example.com" {...field} /></FormControl>
+                        <FormLabel>Adresse crypto ou email ChangeNOW PRO</FormLabel>
+                        <FormControl><Input placeholder="Wallet address ou email@example.com" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />

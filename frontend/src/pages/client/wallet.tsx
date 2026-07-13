@@ -67,7 +67,7 @@ export default function ClientWallet() {
     resolver: zodResolver(withdrawSchema),
     defaultValues: {
       amount: 10,
-      method: 'paypal',
+      method: 'trx',
       accountDetails: '',
     },
   });
@@ -104,7 +104,7 @@ export default function ClientWallet() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
         <h1 className="page-title">{t('wallet.title')}</h1>
         <p className="page-subtitle">{t('wallet.subtitle')}</p>
@@ -113,28 +113,28 @@ export default function ClientWallet() {
       {/* Wallet Balance Card */}
       <Card className="bg-primary/5 border-primary/20 relative overflow-hidden">
         <div className="absolute right-0 top-0 w-48 h-48 bg-primary/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none" />
-        <CardContent className="relative z-10 p-5 sm:p-6">
-          <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-            <div className="space-y-4">
+        <CardContent className="relative z-10 p-4 sm:p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 space-y-3 sm:space-y-4">
               <div>
-                <p className="text-sm font-medium text-primary uppercase tracking-wider mb-1">{t('wallet.available_balance')}</p>
+                <p className="mb-1 text-[11px] font-semibold uppercase text-primary sm:text-xs">{t('wallet.available_balance')}</p>
                 {walletLoading ? <Skeleton className="h-10 w-40" /> : (
-                  <p className="text-3xl font-display font-bold text-foreground sm:text-4xl">
+                  <p className="whitespace-nowrap font-display text-2xl font-bold text-foreground tabular-nums sm:text-4xl">
                     ${wallet?.balance?.toFixed(2) || '0.00'}
                   </p>
                 )}
               </div>
-              <div className="flex flex-wrap gap-4 text-sm">
-                <div className="text-muted-foreground">
-                  {t('wallet.pending_balance')}: <span className="font-mono text-foreground font-medium">${wallet?.pendingBalance?.toFixed(2) || '0.00'}</span>
+              <div className="grid gap-2 text-xs sm:flex sm:flex-wrap sm:gap-4 sm:text-sm">
+                <div className="min-w-0 text-muted-foreground">
+                  <span className="truncate">{t('wallet.pending_balance')}:</span> <span className="whitespace-nowrap font-mono font-medium text-foreground">${wallet?.pendingBalance?.toFixed(2) || '0.00'}</span>
                 </div>
                 <div className="w-px h-4 bg-border hidden sm:block" />
-                <div className="text-muted-foreground">
-                  {t('wallet.total_earned')}: <span className="font-mono text-foreground font-medium">${wallet?.totalEarned?.toFixed(2) || '0.00'}</span>
+                <div className="min-w-0 text-muted-foreground">
+                  <span className="truncate">{t('wallet.total_earned')}:</span> <span className="whitespace-nowrap font-mono font-medium text-foreground">${wallet?.totalEarned?.toFixed(2) || '0.00'}</span>
                 </div>
                 <div className="w-px h-4 bg-border hidden sm:block" />
-                <div className="text-muted-foreground">
-                  {t('wallet.total_spent')}: <span className="font-mono text-foreground font-medium">${wallet?.totalSpent?.toFixed(2) || '0.00'}</span>
+                <div className="min-w-0 text-muted-foreground">
+                  <span className="truncate">{t('wallet.total_spent')}:</span> <span className="whitespace-nowrap font-mono font-medium text-foreground">${wallet?.totalSpent?.toFixed(2) || '0.00'}</span>
                 </div>
               </div>
             </div>
@@ -258,15 +258,15 @@ export default function ClientWallet() {
                       )} />
                       <FormField control={form.control} name="method" render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('wallet.method')}</FormLabel>
-                          <FormControl><Input placeholder="PayPal, USDT, Bank..." {...field} /></FormControl>
+                          <FormLabel>Devise payout NOWPayments</FormLabel>
+                          <FormControl><Input placeholder="trx, usdttrc20, btc..." {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
                       <FormField control={form.control} name="accountDetails" render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t('wallet.account_details')}</FormLabel>
-                          <FormControl><Input placeholder="email@example.com or wallet address" {...field} /></FormControl>
+                          <FormLabel>Adresse crypto ou email ChangeNOW PRO</FormLabel>
+                          <FormControl><Input placeholder="Wallet address ou email@example.com" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />

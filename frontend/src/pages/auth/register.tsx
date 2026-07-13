@@ -22,6 +22,13 @@ const formSchema = z.object({
   country: z.string().min(2),
 });
 
+function inferDefaultCountry() {
+  const locale = navigator.language || '';
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+  if (locale.toUpperCase().includes('-BI') || timezone === 'Africa/Bujumbura') return 'BI';
+  return 'BI';
+}
+
 export default function Register() {
   const { t, lang } = useTranslation();
   const [, setLocation] = useLocation();
@@ -36,7 +43,7 @@ export default function Register() {
       email: '',
       password: '',
       role: 'worker',
-      country: '',
+      country: inferDefaultCountry(),
     },
   });
 
@@ -146,7 +153,7 @@ export default function Register() {
                     <FormItem>
                       <FormLabel>{t('auth.country')}</FormLabel>
                       <FormControl>
-                        <Input placeholder="US, FR, UK..." {...field} />
+                        <Input placeholder="BI" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

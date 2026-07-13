@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  validate:
+    name: Typecheck, tests, and builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.25.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Critical backend tests
+        run: |
+          pnpm --dir backend exec vitest run \
+            src/__tests__/nowpayments-payout.test.ts \
+            src/__tests__/kyc-response-sanitizer.test.ts \
+            --reporter verbose
+
+      - name: Build applications
+        run: pnpm run build
+
+      - name: Build Docker images
+        run: docker compose build backend frontend kyc-vision-service

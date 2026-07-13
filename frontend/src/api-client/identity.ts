@@ -9,7 +9,13 @@ export function getMyReputation() {
   });
 }
 
-export function submitKyc(data: { idCardData: string; selfieData: string }) {
+export function submitKyc(data: {
+  frontImageData: string;
+  backImageData: string;
+  livenessSessionId: string;
+  livenessOrder: Array<'blink' | 'head_turn' | 'mouth'>;
+  livenessSegments: Record<'blink' | 'head_turn' | 'mouth', string[]>;
+}) {
   return customFetch<{ message: string; user: User }>('/api/users/me/kyc', {
     method: 'POST',
     responseType: 'json',

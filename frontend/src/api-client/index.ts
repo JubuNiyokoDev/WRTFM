@@ -1,6 +1,7 @@
 export * from "./generated/api";
 export * from "./generated/api.schemas";
 export * from "./identity";
+export * from "./kyc-compliance";
 export * from "./payments";
 export * from "./proofs";
 export { setBaseUrl, setAuthTokenGetter } from "./custom-fetch";

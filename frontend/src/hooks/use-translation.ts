@@ -16,7 +16,8 @@ const translations = {
     'nav.logout': 'Déconnexion',
     'nav.profile': 'Profil',
     'nav.wallet': 'Portefeuille',
-    
+    'nav.history': 'Historique',
+
     // Roles
     'role.client': 'Client',
     'role.worker': 'Travailleur',
@@ -101,7 +102,7 @@ const translations = {
     'wallet.no_transactions': 'Aucune transaction pour le moment',
     'wallet.type': 'Type',
     'wallet.description': 'Description',
-    
+
     // Status
     'status.active': 'Actif',
     'status.draft': 'Brouillon',
@@ -248,7 +249,7 @@ const translations = {
     'worker.dash.pending_earnings': 'Gains en attente',
     'worker.dash.reputation': 'Réputation',
     'worker.dash.available_tasks': 'Missions disponibles',
-    
+
     // Admin Dashboard
     'admin.dash.total_users': 'Utilisateurs totaux',
     'admin.dash.pending_reviews': 'Revues manuelles en attente',
@@ -354,6 +355,9 @@ const translations = {
     'worker.validation_rate': 'Taux validation',
     'worker.transaction_history': 'Historique transactions',
     'worker.no_transactions': 'Aucune transaction pour le moment.',
+    'worker.history.title': 'Historique des missions',
+    'worker.history.subtitle': 'Consultez toutes vos missions passées et leur statut.',
+    'worker.history.no_tasks': 'Aucune mission trouvée dans votre historique.',
     'worker.task.back': 'Retour aux missions',
     'worker.task.unavailable': 'Indisponible',
     'worker.task.est_time': 'Temps estimé',
@@ -431,7 +435,7 @@ const translations = {
     'admin.dashboard.processing_time': 'Temps traitement',
     'notfound.title': 'Page introuvable',
     'notfound.copy': 'La page demandée n’existe pas.',
-    
+
     // Notifications
     'notifications.center_title': 'Notifications',
     'notifications.empty': 'Aucune notification',
@@ -464,6 +468,7 @@ const translations = {
     'nav.logout': 'Log out',
     'nav.profile': 'Profile',
     'nav.wallet': 'Wallet',
+    'nav.history': 'History',
 
     // Roles
     'role.client': 'Client',
@@ -802,6 +807,9 @@ const translations = {
     'worker.validation_rate': 'Validation rate',
     'worker.transaction_history': 'Transaction history',
     'worker.no_transactions': 'No transactions yet.',
+    'worker.history.title': 'Task History',
+    'worker.history.subtitle': 'Review all your past tasks and their status.',
+    'worker.history.no_tasks': 'No tasks found in your history.',
     'worker.task.back': 'Back to available tasks',
     'worker.task.unavailable': 'Unavailable',
     'worker.task.est_time': 'Est. time',
@@ -879,7 +887,7 @@ const translations = {
     'admin.dashboard.processing_time': 'Processing time',
     'notfound.title': 'Page not found',
     'notfound.copy': 'The page you requested does not exist.',
-    
+
     // Notifications
     'notifications.center_title': 'Notifications',
     'notifications.empty': 'No notifications yet',

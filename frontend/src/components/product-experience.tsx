@@ -161,7 +161,7 @@ export function AppBottomNav() {
 
    return (
      <nav
-       className="app-bottom-bar fixed bottom-0 left-0 right-0 z-40 mx-auto grid h-20 max-w-4xl grid-flow-col auto-cols-fr items-center gap-1 border-t border-border px-2 py-2 text-muted-foreground lg:hidden"
+       className="app-bottom-bar fixed bottom-0 left-0 right-0 z-40 mx-auto grid h-[4.25rem] max-w-4xl grid-flow-col auto-cols-fr items-center gap-1 border-t border-border px-2 pb-[calc(0.35rem+env(safe-area-inset-bottom))] pt-1.5 text-muted-foreground lg:hidden"
        aria-label="Mobile navigation"
      >
       {navItems.map((item) => {
@@ -174,14 +174,14 @@ export function AppBottomNav() {
              href={item.href}
              aria-current={isActive ? 'page' : undefined}
              className={cn(
-               'mx-auto flex h-12 min-w-0 max-w-[6rem] flex-col items-center justify-center gap-1 rounded-md px-2 text-xs font-semibold transition-all sm:text-xs',
+               'mx-auto flex h-12 min-w-0 max-w-[5.5rem] flex-col items-center justify-center gap-0.5 rounded-md px-1.5 text-[10px] font-semibold leading-none transition-all sm:text-xs',
                isActive
-                 ? 'bg-primary text-primary-foreground shadow-[0_14px_36px_-24px_hsl(var(--primary))]'
+                 ? 'bg-primary/95 text-primary-foreground shadow-[0_14px_36px_-24px_hsl(var(--primary))]'
                  : 'hover:bg-card hover:text-foreground'
              )}
            >
-             <Icon className="h-5 w-5 flex-none sm:h-5 sm:w-5" />
-             <span className="w-full truncate text-center text-xs leading-tight">{item.label}</span>
+             <Icon className="h-[18px] w-[18px] flex-none sm:h-5 sm:w-5" />
+             <span className="w-full truncate text-center leading-tight">{item.label}</span>
            </Link>
         );
       })}

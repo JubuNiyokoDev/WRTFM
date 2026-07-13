@@ -270,8 +270,8 @@
     max-width: 100%;
   }
 
-  p, h1, h2, h3, h4, h5, h6, span, a, td, th {
-    overflow-wrap: anywhere;
+  p, h1, h2, h3, h4, h5, h6, a, td, th {
+    overflow-wrap: break-word;
   }
 
   th {
@@ -308,11 +308,11 @@
   }
 
   .metric-value {
-    @apply font-mono text-lg font-bold leading-none sm:text-xl;
+    @apply whitespace-nowrap font-mono text-lg font-bold leading-none sm:text-xl;
   }
 
   .metric-value-lg {
-    @apply font-mono text-xl font-bold leading-none sm:text-2xl;
+    @apply whitespace-nowrap font-mono text-xl font-bold leading-none sm:text-2xl;
   }
 
   .app-panel {

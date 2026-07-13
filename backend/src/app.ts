@@ -41,7 +41,7 @@ app.use(cors({
   credentials: true,
 }));
 app.use(express.json({
-  limit: '10mb',
+  limit: '30mb',
   verify(req: any, _res, buffer) {
     req.rawBody = buffer.toString("utf8");
   },

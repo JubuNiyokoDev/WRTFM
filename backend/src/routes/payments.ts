@@ -47,6 +47,14 @@ function ipnCallbackUrl(): string | null {
   return `${process.env.PUBLIC_API_URL.replace(/\/+$/, "")}/api/payments/nowpayments/ipn`;
 }
 
+function payoutTransactionStatus(status: string): "pending" | "completed" | "failed" | "cancelled" {
+  const normalized = status.toLowerCase();
+  if (["finished", "confirmed", "completed", "success", "sent"].includes(normalized)) return "completed";
+  if (["failed", "rejected", "refunded"].includes(normalized)) return "failed";
+  if (["expired", "cancelled", "canceled"].includes(normalized)) return "cancelled";
+  return "pending";
+}
+
 router.post("/payments/crypto/deposit", strictRateLimit, async (req, res): Promise<void> => {
   const userId = getRequestUserId(req);
   if (!userId) {
@@ -258,6 +266,55 @@ router.post("/payments/nowpayments/ipn", strictRateLimit, async (req, res): Prom
   }
 
   res.json({ message: "IPN processed" });
+});
+
+router.post("/payments/nowpayments/payout-ipn", strictRateLimit, async (req, res): Promise<void> => {
+  if (!isValidIpnSignature(req.body, req.header("x-nowpayments-sig") ?? undefined)) {
+    res.status(401).json({ error: "Invalid IPN signature" });
+    return;
+  }
+
+  const body = req.body as Record<string, unknown>;
+  const payoutId =
+    body.payout_id ??
+    body.batch_withdrawal_id ??
+    body.id ??
+    (Array.isArray(body.withdrawals) ? (body.withdrawals[0] as any)?.id : undefined);
+  if (payoutId == null) {
+    res.status(400).json({ error: "Missing payout identifier" });
+    return;
+  }
+
+  const reference = `nowpayments:payout:${String(payoutId)}`;
+  const transaction = (await db.select().from(transactionsTable).where(eq(transactionsTable.reference, reference)))[0];
+  if (!transaction) {
+    res.status(404).json({ error: "Payout transaction not found" });
+    return;
+  }
+
+  const providerStatus =
+    typeof body.status === "string"
+      ? body.status
+      : typeof body.payout_status === "string"
+        ? body.payout_status
+        : "waiting";
+  const status = payoutTransactionStatus(providerStatus);
+
+  await db.update(transactionsTable).set({
+    status,
+    description: `NOWPayments payout ${providerStatus}`,
+  }).where(eq(transactionsTable.id, transaction.id));
+
+  if ((status === "failed" || status === "cancelled") && transaction.status === "pending") {
+    const [wallet] = await db.select().from(walletsTable).where(eq(walletsTable.id, transaction.walletId));
+    if (wallet) {
+      await db.update(walletsTable).set({
+        balance: wallet.balance + transaction.amount,
+      }).where(eq(walletsTable.id, wallet.id));
+    }
+  }
+
+  res.json({ message: "Payout IPN processed" });
 });
 
 export default router;

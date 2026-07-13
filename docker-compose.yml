@@ -1,17 +1,18 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
     container_name: cae-postgres-prod
     environment:
-      POSTGRES_USER: cae
-      POSTGRES_PASSWORD: cae_password
-      POSTGRES_DB: cae
-    ports:
-      - "5434:5432"
+      POSTGRES_USER: ${POSTGRES_USER:-cae}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_this_postgres_password}
+      POSTGRES_DB: ${POSTGRES_DB:-cae}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cae} -d ${POSTGRES_DB:-cae}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: always
 
   backend:
@@ -20,19 +21,65 @@ services:
       dockerfile: backend/Dockerfile
     container_name: cae-backend
     ports:
-      - "3001:3001"
+      - "127.0.0.1:3001:3001"
     environment:
       - PORT=3001
-      - DATABASE_URL=postgresql://cae:cae_password@postgres:5432/cae
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-cae}:${POSTGRES_PASSWORD:-change_this_postgres_password}@postgres:5432/${POSTGRES_DB:-cae}
       - NODE_ENV=production
-      # Add other production environment variables here:
-      # - CORS_ORIGIN=http://localhost
-      # - NOWPAYMENTS_API_KEY=your_key
-      # - NOWPAYMENTS_IPN_SECRET=your_secret
-      # - NOWPAYMENTS_IPN_URL=your_ipn_url
-      # - PUBLIC_API_URL=http://localhost:3001
+      - KYC_VISION_SERVICE_URL=http://kyc-vision-service:5010
+      - PUBLIC_API_URL=${PUBLIC_API_URL:-https://wrtfm.work.gd}
+      - CORS_ORIGIN=${CORS_ORIGIN:-https://wrtfm.work.gd,https://www.wrtfm.work.gd}
+      - APP_AUTH_SECRET=${APP_AUTH_SECRET}
+      - AUTH_TOKEN_TTL_SECONDS=${AUTH_TOKEN_TTL_SECONDS:-604800}
+      - KYC_ENCRYPTION_KEY=${KYC_ENCRYPTION_KEY}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - APPWRITE_ENDPOINT=${APPWRITE_ENDPOINT}
+      - APPWRITE_PROJECT_ID=${APPWRITE_PROJECT_ID}
+      - APPWRITE_API_KEY=${APPWRITE_API_KEY}
+      - APPWRITE_PROOFS_BUCKET_ID=${APPWRITE_PROOFS_BUCKET_ID}
+      - NOWPAYMENTS_API_URL=${NOWPAYMENTS_API_URL:-https://api.nowpayments.io/v1}
+      - NOWPAYMENTS_API_KEY=${NOWPAYMENTS_API_KEY}
+      - NOWPAYMENTS_IPN_SECRET=${NOWPAYMENTS_IPN_SECRET}
+      - NOWPAYMENTS_IPN_URL=${NOWPAYMENTS_IPN_URL}
+      - NOWPAYMENTS_PAYOUT_EMAIL=${NOWPAYMENTS_PAYOUT_EMAIL}
+      - NOWPAYMENTS_PAYOUT_PASSWORD=${NOWPAYMENTS_PAYOUT_PASSWORD}
+      - NOWPAYMENTS_PAYOUT_TOTP_SECRET=${NOWPAYMENTS_PAYOUT_TOTP_SECRET}
+      - NOWPAYMENTS_PAYOUT_IPN_URL=${NOWPAYMENTS_PAYOUT_IPN_URL}
+      - MIN_WITHDRAWAL_USD=${MIN_WITHDRAWAL_USD:-10}
+      - ENABLE_MANUAL_WALLET_DEPOSITS=false
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      kyc-vision-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3001/api/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: always
+
+  kyc-vision-service:
+    build:
+      context: ./backend/kyc-vision-service
+      dockerfile: Dockerfile
+    container_name: cae-kyc-vision
+    expose:
+      - "5010"
+    volumes:
+      # Monte les modèles ONNX depuis le dossier backend/models/
+      - ./backend/models:/models:ro
+    environment:
+      - MODELS_DIR=/models
+      - YUNET_CONF_THRESHOLD=0.3
+      - YUNET_NMS_THRESHOLD=0.3
+      - ANTISPOOFING_REAL_THRESHOLD=0.75
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5010/health', timeout=5).read()"]
+      interval: 20s
+      timeout: 8s
+      retries: 6
     restart: always
 
   frontend:
@@ -41,9 +88,10 @@ services:
       dockerfile: frontend/Dockerfile
     container_name: cae-frontend
     ports:
-      - "8080:80"
+      - "127.0.0.1:8080:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     restart: always
 
 volumes:

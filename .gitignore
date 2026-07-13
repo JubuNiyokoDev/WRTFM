@@ -50,3 +50,4 @@ Thumbs.db
 .github/instructions/nx.instructions.md
 
 .cache/
+.certs/

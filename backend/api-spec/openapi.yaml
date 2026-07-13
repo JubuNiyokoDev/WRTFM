@@ -32,6 +32,8 @@ tags:
     description: Dashboard summaries
   - name: reputation
     description: Reputation system
+  - name: kyc
+    description: Burundi KYC verification and compliance review
 
 paths:
   /healthz:
@@ -522,7 +524,15 @@ paths:
           in: query
           schema:
             type: string
-            enum: [pending, auto_approved, auto_rejected, manual_review, approved, rejected]
+            enum:
+              [
+                pending,
+                auto_approved,
+                auto_rejected,
+                manual_review,
+                approved,
+                rejected,
+              ]
         - name: page
           in: query
           schema:
@@ -676,6 +686,170 @@ paths:
               schema:
                 $ref: "#/components/schemas/ReputationDetail"
 
+  /users/me/kyc/history:
+    get:
+      operationId: listMyKycHistory
+      tags: [kyc]
+      summary: List current user's KYC verification history
+      responses:
+        "200":
+          description: KYC history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KycVerificationList"
+
+  /admin/kyc-verifications:
+    get:
+      operationId: listAdminKycVerifications
+      tags: [kyc]
+      summary: List KYC verifications for compliance review
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [approved, rejected, manual_review]
+        - name: userId
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: KYC verifications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KycVerificationList"
+
+  /admin/kyc-verifications/{id}:
+    get:
+      operationId: getAdminKycVerification
+      tags: [kyc]
+      summary: Get one KYC verification with masked secure details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: KYC verification detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KycVerification"
+
+  /admin/kyc-verifications/{id}/decision:
+    post:
+      operationId: decideAdminKycVerification
+      tags: [kyc]
+      summary: Approve or reject a KYC verification after compliance review
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/KycReviewDecisionInput"
+      responses:
+        "200":
+          description: KYC compliance decision applied
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/KycReviewDecisionResponse"
+
+  /admin/kyc-verifications/{id}/files/{kind}:
+    get:
+      operationId: getAdminKycVerificationFile
+      tags: [kyc]
+      summary: Fetch one private KYC evidence file for admin review
+      description: Requires admin authentication. Documents and liveness frames are never exposed publicly.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: kind
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [front, back, liveFace, blink, head_turn, mouth]
+        - name: index
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+          description: Frame index for liveness segment files.
+      responses:
+        "200":
+          description: Private evidence image
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/users/{id}/kyc/reset:
+    post:
+      operationId: resetUserKyc
+      tags: [kyc]
+      summary: Reset a user's permanent KYC status for compliance reasons
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        "200":
+          description: KYC reset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageUserResponse"
+
   # Wallet
   /wallet:
     get:
@@ -788,7 +962,8 @@ paths:
     post:
       operationId: withdrawFunds
       tags: [wallet]
-      summary: Withdraw funds
+      summary: Create a NOWPayments payout withdrawal
+      description: Debits the USD wallet only after NOWPayments accepts the payout request. `method` is the NOWPayments payout currency code, `accountDetails` is the crypto address or ChangeNOW PRO email.
       requestBody:
         required: true
         content:
@@ -1003,6 +1178,149 @@ components:
         limit:
           type: integer
 
+    KycVerification:
+      type: object
+      required: [id, userId, status, confidence, reason, documentType, method, createdAt]
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        status:
+          type: string
+          enum: [approved, rejected, manual_review]
+        confidence:
+          type: number
+        reason:
+          type: string
+        documentType:
+          type: string
+        method:
+          type: string
+        officialNumber:
+          type: ["string", "null"]
+        duplicateSignals:
+          type: object
+          additionalProperties: true
+        storageFiles:
+          type: ["object", "null"]
+          additionalProperties: true
+          description: Private storage metadata only. No public document URL is exposed.
+        fileAccess:
+          anyOf:
+            - $ref: "#/components/schemas/KycFileAccess"
+            - type: "null"
+          description: Admin-only secure fetch URLs for private KYC evidence.
+        reviewedBy:
+          type: ["integer", "null"]
+        reviewReason:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+        reviewedAt:
+          type: ["string", "null"]
+          format: date-time
+        result:
+          type: object
+          additionalProperties: true
+          description: Masked decrypted engine result for admin detail view.
+
+    KycFileAccess:
+      type: object
+      required: [direct, livenessSegments]
+      properties:
+        direct:
+          type: array
+          items:
+            $ref: "#/components/schemas/KycFileLink"
+        livenessSegments:
+          type: array
+          items:
+            type: object
+            required: [challenge, frames]
+            properties:
+              challenge:
+                type: string
+                enum: [blink, head_turn, mouth]
+              frames:
+                type: array
+                items:
+                  $ref: "#/components/schemas/KycFrameLink"
+
+    KycFileLink:
+      type: object
+      required: [kind, label, url]
+      properties:
+        kind:
+          type: string
+        label:
+          type: string
+        mimeType:
+          type: ["string", "null"]
+        size:
+          type: ["integer", "null"]
+        url:
+          type: string
+
+    KycFrameLink:
+      type: object
+      required: [index, label, url]
+      properties:
+        index:
+          type: integer
+        label:
+          type: string
+        mimeType:
+          type: ["string", "null"]
+        size:
+          type: ["integer", "null"]
+        url:
+          type: string
+
+    KycVerificationList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/KycVerification"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+
+    KycReviewDecisionInput:
+      type: object
+      required: [decision]
+      properties:
+        decision:
+          type: string
+          enum: [approved, rejected]
+        reviewReason:
+          type: string
+
+    KycReviewDecisionResponse:
+      type: object
+      required: [verification]
+      properties:
+        verification:
+          $ref: "#/components/schemas/KycVerification"
+        user:
+          $ref: "#/components/schemas/User"
+
+    MessageUserResponse:
+      type: object
+      required: [message, user]
+      properties:
+        message:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+
     UserUpdate:
       type: object
       properties:
@@ -1020,7 +1338,16 @@ components:
 
     ReputationDetail:
       type: object
-      required: [userId, score, tasksCompleted, validationRate, avgProofQuality, level, badges]
+      required:
+        [
+          userId,
+          score,
+          tasksCompleted,
+          validationRate,
+          avgProofQuality,
+          level,
+          badges,
+        ]
       properties:
         userId:
           type: integer
@@ -1047,7 +1374,21 @@ components:
     # Campaign
     Campaign:
       type: object
-      required: [id, clientId, title, description, taskType, platform, status, budget, spent, workersNeeded, workersCompleted, createdAt]
+      required:
+        [
+          id,
+          clientId,
+          title,
+          description,
+          taskType,
+          platform,
+          status,
+          budget,
+          spent,
+          workersNeeded,
+          workersCompleted,
+          createdAt,
+        ]
       properties:
         id:
           type: integer
@@ -1059,7 +1400,29 @@ components:
           type: string
         taskType:
           type: string
-          enum: [youtube_watch, youtube_like, youtube_comment, youtube_subscribe, instagram_follow, instagram_like, instagram_comment, tiktok_follow, tiktok_like, tiktok_comment, twitter_follow, twitter_like, twitter_retweet, website_visit, website_signup, app_install, app_test, form_fill, content_review, data_collection]
+          enum:
+            [
+              youtube_watch,
+              youtube_like,
+              youtube_comment,
+              youtube_subscribe,
+              instagram_follow,
+              instagram_like,
+              instagram_comment,
+              tiktok_follow,
+              tiktok_like,
+              tiktok_comment,
+              twitter_follow,
+              twitter_like,
+              twitter_retweet,
+              website_visit,
+              website_signup,
+              app_install,
+              app_test,
+              form_fill,
+              content_review,
+              data_collection,
+            ]
         platform:
           type: string
         targetUrl:
@@ -1117,7 +1480,17 @@ components:
 
     CampaignInput:
       type: object
-      required: [title, description, taskType, platform, budget, rewardPerTask, workersNeeded, instructions]
+      required:
+        [
+          title,
+          description,
+          taskType,
+          platform,
+          budget,
+          rewardPerTask,
+          workersNeeded,
+          instructions,
+        ]
       properties:
         title:
           type: string
@@ -1173,7 +1546,18 @@ components:
 
     CampaignStats:
       type: object
-      required: [campaignId, totalAssignments, approved, rejected, pending, automationRate, avgConfidenceScore, totalPaid, avgCompletionTime]
+      required:
+        [
+          campaignId,
+          totalAssignments,
+          approved,
+          rejected,
+          pending,
+          automationRate,
+          avgConfidenceScore,
+          totalPaid,
+          avgCompletionTime,
+        ]
       properties:
         campaignId:
           type: integer
@@ -1212,7 +1596,8 @@ components:
     # Tasks
     Task:
       type: object
-      required: [id, campaignId, title, taskType, platform, reward, status, createdAt]
+      required:
+        [id, campaignId, title, taskType, platform, reward, status, createdAt]
       properties:
         id:
           type: integer
@@ -1386,7 +1771,15 @@ components:
           type: integer
         status:
           type: string
-          enum: [pending, auto_approved, auto_rejected, manual_review, approved, rejected]
+          enum:
+            [
+              pending,
+              auto_approved,
+              auto_rejected,
+              manual_review,
+              approved,
+              rejected,
+            ]
         confidenceScore:
           type: number
         method:
@@ -1448,7 +1841,8 @@ components:
     # Wallet
     Wallet:
       type: object
-      required: [id, userId, balance, currency, totalEarned, totalSpent, pendingBalance]
+      required:
+        [id, userId, balance, currency, totalEarned, totalSpent, pendingBalance]
       properties:
         id:
           type: integer
@@ -1532,7 +1926,20 @@ components:
 
     CryptoDepositResponse:
       type: object
-      required: [transactionId, provider, paymentId, status, priceAmount, priceCurrency, payAmount, payCurrency, payAddress, paymentUrl, raw]
+      required:
+        [
+          transactionId,
+          provider,
+          paymentId,
+          status,
+          priceAmount,
+          priceCurrency,
+          payAmount,
+          payCurrency,
+          payAddress,
+          paymentUrl,
+          raw,
+        ]
       properties:
         transactionId:
           type: integer
@@ -1571,15 +1978,27 @@ components:
         amount:
           type: number
           minimum: 1
+          description: Amount to withdraw from the internal USD wallet.
         method:
           type: string
+          description: NOWPayments payout currency code, for example trx, btc, usdttrc20.
         accountDetails:
           type: string
+          description: Recipient crypto address, or recipient email for ChangeNOW PRO payouts.
 
     # Dashboard summaries
     ClientSummary:
       type: object
-      required: [activeCampaigns, totalCampaigns, totalTasksPublished, totalTasksCompleted, totalSpent, automationRate, pendingVerifications]
+      required:
+        [
+          activeCampaigns,
+          totalCampaigns,
+          totalTasksPublished,
+          totalTasksCompleted,
+          totalSpent,
+          automationRate,
+          pendingVerifications,
+        ]
       properties:
         activeCampaigns:
           type: integer
@@ -1606,7 +2025,16 @@ components:
 
     WorkerSummary:
       type: object
-      required: [tasksCompleted, tasksAvailable, totalEarned, pendingEarnings, reputationScore, validationRate, reputationLevel]
+      required:
+        [
+          tasksCompleted,
+          tasksAvailable,
+          totalEarned,
+          pendingEarnings,
+          reputationScore,
+          validationRate,
+          reputationLevel,
+        ]
       properties:
         tasksCompleted:
           type: integer
@@ -1638,7 +2066,18 @@ components:
 
     AdminSummary:
       type: object
-      required: [totalUsers, totalClients, totalWorkers, totalCampaigns, totalTasks, totalVerifications, automationRate, pendingManualReviews, totalVolume]
+      required:
+        [
+          totalUsers,
+          totalClients,
+          totalWorkers,
+          totalCampaigns,
+          totalTasks,
+          totalVerifications,
+          automationRate,
+          pendingManualReviews,
+          totalVolume,
+        ]
       properties:
         totalUsers:
           type: integer
@@ -1673,7 +2112,17 @@ components:
           type: integer
         type:
           type: string
-          enum: [task_completed, task_rejected, campaign_created, campaign_paused, withdrawal_requested, user_registered, manual_review_needed, automation_milestone]
+          enum:
+            [
+              task_completed,
+              task_rejected,
+              campaign_created,
+              campaign_paused,
+              withdrawal_requested,
+              user_registered,
+              manual_review_needed,
+              automation_milestone,
+            ]
         description:
           type: string
         userId:
@@ -1692,7 +2141,15 @@ components:
 
     AutomationStats:
       type: object
-      required: [overallRate, autoApproved, autoRejected, manualReview, totalProcessed, avgProcessingMs]
+      required:
+        [
+          overallRate,
+          autoApproved,
+          autoRejected,
+          manualReview,
+          totalProcessed,
+          avgProcessingMs,
+        ]
       properties:
         overallRate:
           type: number

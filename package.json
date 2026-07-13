@@ -7,7 +7,7 @@
     "db:start": "docker start cae-postgres || docker run -d --name cae-postgres -e POSTGRES_USER=cae -e POSTGRES_PASSWORD=cae_password -e POSTGRES_DB=cae -p 5433:5432 postgres:16-alpine",
     "db:push": "DATABASE_URL=${DATABASE_URL:-postgresql://cae:cae_password@localhost:5433/cae} pnpm --dir backend db:push",
     "dev:frontend": "pnpm --dir frontend dev:web",
-    "dev:backend": "pnpm --dir backend dev",
+    "dev:backend": "pnpm run db:start && pnpm run db:push && pnpm --dir backend dev",
     "dev:tauri": "pnpm --dir frontend dev:tauri",
     "build": "pnpm run typecheck && pnpm --dir backend build && pnpm --dir frontend build",
     "build:tauri": "pnpm --dir frontend build:tauri",

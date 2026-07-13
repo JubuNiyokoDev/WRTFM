@@ -95,6 +95,7 @@ export const GetMeResponse = zod.object({
   "avatarUrl": zod.string().nullish(),
   "isActive": zod.boolean().optional(),
   "reputationScore": zod.number().optional(),
+  "kycStatus": zod.enum(['unverified', 'pending', 'verified', 'rejected']).optional(),
   "createdAt": zod.coerce.date()
 })
 
@@ -1403,5 +1404,4 @@ export const GetTaskTypeBreakdownResponseItem = zod.object({
   "totalReward": zod.number()
 })
 export const GetTaskTypeBreakdownResponse = zod.array(GetTaskTypeBreakdownResponseItem)
-
 

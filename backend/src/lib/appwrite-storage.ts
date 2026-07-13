@@ -45,6 +45,20 @@ export function getFileHash(buffer: Buffer): string {
 export async function uploadProofFile(
   file: Express.Multer.File,
 ): Promise<StoredProofFile> {
+  return uploadBufferFile({
+    buffer: file.buffer,
+    size: file.size,
+    mimetype: file.mimetype,
+    originalname: file.originalname,
+  });
+}
+
+export async function uploadBufferFile(file: {
+  buffer: Buffer;
+  size?: number;
+  mimetype: string;
+  originalname: string;
+}): Promise<StoredProofFile> {
   const endpoint = appwriteEndpoint();
   const projectId = requiredEnv("APPWRITE_PROJECT_ID");
   const apiKey = requiredEnv("APPWRITE_API_KEY");
@@ -87,7 +101,7 @@ export async function uploadProofFile(
     fileId,
     bucketId,
     endpoint,
-    size: file.size,
+    size: file.size ?? file.buffer.length,
     mimeType: file.mimetype,
     originalName: file.originalname,
     sha256,

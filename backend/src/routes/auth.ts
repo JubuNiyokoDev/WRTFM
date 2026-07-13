@@ -31,6 +31,7 @@ function toPublicUser(user: typeof usersTable.$inferSelect) {
     avatarUrl: user.avatarUrl ?? null,
     isActive: user.isActive,
     reputationScore: user.reputationScore,
+    kycStatus: user.kycStatus,
     createdAt: user.createdAt,
   };
 }

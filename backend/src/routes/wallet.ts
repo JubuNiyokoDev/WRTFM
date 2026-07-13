@@ -14,8 +14,16 @@ import { getUserIdFromToken } from "./auth";
 import { logWalletTransaction } from "@/lib/audit-logger";
 import { usersTable } from "@/db";
 import { strictRateLimit } from "@/middlewares/rate-limit";
+import { createNowPaymentsPayout } from "@/lib/nowpayments-payout";
 
 const router: IRouter = Router();
+const MIN_WITHDRAWAL_USD = Number(process.env.MIN_WITHDRAWAL_USD ?? "5");
+
+function payoutIpnCallbackUrl(): string | null {
+  if (process.env.NOWPAYMENTS_PAYOUT_IPN_URL) return process.env.NOWPAYMENTS_PAYOUT_IPN_URL;
+  if (!process.env.PUBLIC_API_URL) return null;
+  return `${process.env.PUBLIC_API_URL.replace(/\/+$/, "")}/api/payments/nowpayments/payout-ipn`;
+}
 
 function getRequestUserId(req: any): number | null {
   const authHeader = req.headers.authorization;
@@ -151,9 +159,40 @@ router.post("/wallet/withdraw", strictRateLimit, async (req, res): Promise<void>
     return;
   }
 
+  const [currentUser] = await db
+    .select({ role: usersTable.role, kycStatus: usersTable.kycStatus })
+    .from(usersTable)
+    .where(eq(usersTable.id, userId));
+  if (!currentUser) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  if (currentUser.kycStatus !== "verified") {
+    res.status(403).json({
+      error: "KYC verified status is required before withdrawals.",
+      kycStatus: currentUser.kycStatus,
+    });
+    return;
+  }
+
   let [wallet] = await db.select().from(walletsTable).where(eq(walletsTable.userId, userId));
   if (!wallet || wallet.balance < parsed.data.amount) {
     res.status(400).json({ error: "Insufficient balance" });
+    return;
+  }
+  if (parsed.data.amount < MIN_WITHDRAWAL_USD) {
+    res.status(400).json({ error: `Minimum withdrawal is $${MIN_WITHDRAWAL_USD}.` });
+    return;
+  }
+
+  const payoutCurrency = parsed.data.method.trim().toLowerCase();
+  const payoutAddress = parsed.data.accountDetails?.trim();
+  if (!/^[a-z0-9_:-]{2,24}$/.test(payoutCurrency)) {
+    res.status(400).json({ error: "Invalid payout currency. Use a NOWPayments currency code like trx, btc, usdttrc20." });
+    return;
+  }
+  if (!payoutAddress || payoutAddress.length < 5) {
+    res.status(400).json({ error: "Payout address or ChangeNOW PRO email is required." });
     return;
   }
 
@@ -162,23 +201,62 @@ router.post("/wallet/withdraw", strictRateLimit, async (req, res): Promise<void>
     type: "withdrawal",
     amount: parsed.data.amount,
     status: "pending",
-    description: `Withdrawal via ${parsed.data.method}`,
+    description: `NOWPayments payout requested: ${payoutCurrency}`,
   }).returning();
+
+  let payout;
+  try {
+    payout = await createNowPaymentsPayout({
+      transactionId: tx.id,
+      amountUsd: parsed.data.amount,
+      payoutCurrency,
+      payoutAddress,
+      ipnCallbackUrl: payoutIpnCallbackUrl(),
+    });
+  } catch (error) {
+    await db.update(transactionsTable).set({
+      status: "failed",
+      description: error instanceof Error ? error.message : "NOWPayments payout failed",
+    }).where(eq(transactionsTable.id, tx.id));
+    res.status(502).json({
+      error: error instanceof Error ? error.message : "NOWPayments payout failed",
+      transactionId: tx.id,
+    });
+    return;
+  }
+
+  await db.update(transactionsTable).set({
+    status: "pending",
+    reference: payout.batchWithdrawalId
+      ? `nowpayments:payout:${payout.batchWithdrawalId}`
+      : payout.payoutId
+        ? `nowpayments:payout:${payout.payoutId}`
+        : `nowpayments:payout:transaction:${tx.id}`,
+    description:
+      `NOWPayments payout ${payout.providerStatus}: ${parsed.data.amount.toFixed(2)} USD -> ` +
+      `${payout.estimatedCryptoAmount} ${payoutCurrency}` +
+      (payout.verification?.attempted ? `; 2FA verify status ${payout.verification.status}` : ""),
+  }).where(eq(transactionsTable.id, tx.id));
 
   await db.update(walletsTable).set({
     balance: wallet.balance - parsed.data.amount,
   }).where(eq(walletsTable.id, wallet.id));
 
   // Retrieve user role for audit logs
-  const [user] = await db.select({ role: usersTable.role }).from(usersTable).where(eq(usersTable.id, userId));
-  if (user && (user.role === "client" || user.role === "worker")) {
-    await logWalletTransaction(userId, user.role, "wallet_withdrawal", parsed.data.amount, tx.id);
+  if (currentUser.role === "client" || currentUser.role === "worker") {
+    await logWalletTransaction(userId, currentUser.role, "wallet_withdrawal", parsed.data.amount, tx.id);
   }
 
   res.json(WithdrawFundsResponse.parse({
     ...tx,
-    reference: tx.reference ?? null,
-    description: tx.description ?? null,
+    reference: payout.batchWithdrawalId
+      ? `nowpayments:payout:${payout.batchWithdrawalId}`
+      : payout.payoutId
+        ? `nowpayments:payout:${payout.payoutId}`
+        : `nowpayments:payout:transaction:${tx.id}`,
+    description:
+      `NOWPayments payout ${payout.providerStatus}: ${parsed.data.amount.toFixed(2)} USD -> ` +
+      `${payout.estimatedCryptoAmount} ${payoutCurrency}`,
   }));
 });
 

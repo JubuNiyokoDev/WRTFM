@@ -1,4 +1,5 @@
 import path from 'path';
+import fs from 'fs';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
@@ -12,6 +13,14 @@ if (Number.isNaN(port) || port <= 0) {
 
 const basePath = process.env.BASE_PATH ?? './';
 const isTauri = process.env.TAURI_ENV_PLATFORM !== undefined;
+const devCertPath = path.resolve(import.meta.dirname, '../.certs/wrtfm-dev.crt');
+const devKeyPath = path.resolve(import.meta.dirname, '../.certs/wrtfm-dev.key');
+const devHttps = fs.existsSync(devCertPath) && fs.existsSync(devKeyPath)
+  ? {
+      cert: fs.readFileSync(devCertPath),
+      key: fs.readFileSync(devKeyPath),
+    }
+  : undefined;
 
 export default defineConfig({
   base: basePath,
@@ -38,6 +47,7 @@ export default defineConfig({
     strictPort: isTauri,
     host: '0.0.0.0',
     allowedHosts: true,
+    https: devHttps,
     proxy: {
       '/api': {
         target: process.env.API_PROXY_TARGET ?? 'http://localhost:3001',
@@ -52,5 +62,6 @@ export default defineConfig({
     port,
     host: '0.0.0.0',
     allowedHosts: true,
+    https: devHttps,
   },
 });

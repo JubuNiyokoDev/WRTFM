@@ -25,13 +25,13 @@ export default function WorkerDashboard() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
         <h1 className="page-title">{t('worker.dashboard.title')}</h1>
         <p className="page-subtitle">{t('worker.dashboard.subtitle')}</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-3">
         {isSummaryLoading ? (
           <div className="md:col-span-3">
             <MetricGridSkeleton count={3} />
@@ -40,9 +40,9 @@ export default function WorkerDashboard() {
           <>
         <Card className="bg-card border-border shadow-sm">
           <CardContent className="p-3.5 sm:p-4">
-            <div className="flex justify-between items-start">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{t('worker.balance')}</p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 space-y-2">
+                <p className="truncate text-[11px] font-semibold uppercase text-muted-foreground sm:text-xs">{t('worker.balance')}</p>
                 {isSummaryLoading ? <Skeleton className="h-10 w-24" /> : (
                   <p className="metric-value text-foreground">${summary?.walletBalance?.toFixed(2) || '0.00'}</p>
                 )}
@@ -51,22 +51,22 @@ export default function WorkerDashboard() {
                 <Wallet className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
             </div>
-            <div className="mt-4 text-sm text-muted-foreground flex justify-between items-center">
-              <span>{t('worker.pending')}: ${summary?.pendingEarnings?.toFixed(2) || '0.00'}</span>
-              <Link href="/worker/earnings" className="text-primary hover:underline">{t('worker.withdraw')}</Link>
+            <div className="mt-3 flex items-center justify-between gap-2 text-xs text-muted-foreground sm:mt-4 sm:text-sm">
+              <span className="truncate">{t('worker.pending')}: <span className="whitespace-nowrap">${summary?.pendingEarnings?.toFixed(2) || '0.00'}</span></span>
+              <Link href="/worker/earnings" className="shrink-0 text-primary hover:underline">{t('worker.withdraw')}</Link>
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-3.5 sm:p-4">
-            <div className="flex justify-between items-start">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{t('worker.reputation_score')}</p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 space-y-2">
+                <p className="truncate text-[11px] font-semibold uppercase text-muted-foreground sm:text-xs">{t('worker.reputation_score')}</p>
                 {isSummaryLoading ? <Skeleton className="h-10 w-24" /> : (
-                  <div className="flex items-center gap-3">
+                  <div className="flex min-w-0 items-center gap-2">
                     <p className="metric-value">{summary?.reputationScore || 0}</p>
-                    <span className={`px-2 py-1 rounded text-xs font-bold uppercase border ${getReputationColor(summary?.reputationLevel)}`}>
+                    <span className={`truncate rounded border px-2 py-1 text-[10px] font-bold uppercase sm:text-xs ${getReputationColor(summary?.reputationLevel)}`}>
                       {summary?.reputationLevel || 'Newcomer'}
                     </span>
                   </div>
@@ -76,15 +76,15 @@ export default function WorkerDashboard() {
                 <Award className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
             </div>
-            <div className="mt-4 text-sm text-muted-foreground">{t('worker.validation_rate')}: {summary?.validationRate || 0}%</div>
+            <div className="mt-3 text-xs text-muted-foreground sm:mt-4 sm:text-sm">{t('worker.validation_rate')}: <span className="whitespace-nowrap">{summary?.validationRate || 0}%</span></div>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent className="p-3.5 sm:p-4">
-            <div className="flex justify-between items-start">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-muted-foreground uppercase tracking-wider">{t('worker.tasks_completed')}</p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 space-y-2">
+                <p className="truncate text-[11px] font-semibold uppercase text-muted-foreground sm:text-xs">{t('worker.tasks_completed')}</p>
                 {isSummaryLoading ? <Skeleton className="h-10 w-24" /> : (
                   <p className="metric-value">{summary?.tasksCompleted || 0}</p>
                 )}
@@ -93,7 +93,7 @@ export default function WorkerDashboard() {
                 <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
               </div>
             </div>
-            <div className="mt-4 text-sm text-muted-foreground">
+            <div className="mt-3 text-xs text-muted-foreground sm:mt-4 sm:text-sm">
               {t('worker.tasks_available_now').replace('{count}', String(summary?.tasksAvailable || 0))}
             </div>
           </CardContent>

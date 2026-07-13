@@ -10,6 +10,7 @@ import usersRouter from "./users";
 import walletRouter from "./wallet";
 import dashboardRouter from "./dashboard";
 import paymentsRouter from "./payments";
+import adminKycDebugRoutes from './admin-kyc-debug';
 
 const router: IRouter = Router();
 
@@ -27,5 +28,6 @@ router.use(usersRouter);
 router.use(walletRouter);
 router.use(paymentsRouter);
 router.use(dashboardRouter);
+router.use(adminKycDebugRoutes);
 
 export default router;

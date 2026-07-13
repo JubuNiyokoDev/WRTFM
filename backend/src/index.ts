@@ -2,7 +2,6 @@ import "./env";
 import app from "./app";
 import { logger } from "./lib/logger";
 import { seedAdmin } from "./scripts/seed-admin";
-
 const rawPort = process.env["PORT"];
 
 if (!rawPort) {
