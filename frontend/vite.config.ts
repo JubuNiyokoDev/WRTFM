@@ -11,8 +11,8 @@ if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
 
-const basePath = process.env.BASE_PATH ?? './';
 const isTauri = process.env.TAURI_ENV_PLATFORM !== undefined;
+const basePath = process.env.BASE_PATH ?? (isTauri ? './' : '/');
 const devCertPath = path.resolve(import.meta.dirname, '../.certs/wrtfm-dev.crt');
 const devKeyPath = path.resolve(import.meta.dirname, '../.certs/wrtfm-dev.key');
 const devHttps = fs.existsSync(devCertPath) && fs.existsSync(devKeyPath)
